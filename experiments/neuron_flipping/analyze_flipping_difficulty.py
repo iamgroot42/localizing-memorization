@@ -63,10 +63,11 @@ rets = flip_preds(saved_model,
                   channel_wise = args["channel_wise"],
                   gaussian_noise=args["gaussian_noise"],
                   objective = args["objective"],
-                  n_EoT=args["n_EoT"])
+                  n_EoT=args["n_EoT"],
+                  same_as_paper = args["same_as_paper"])
 
 
 import pickle
 
-with open(f"{filename}{args['example_type']}_flips_{args['channel_wise']}_wise_{args['objective']}_gaussian_{args['gaussian_noise']}.pickle", "wb") as output_file:
+with open(f"{filename}{args['example_type']}_flips_{args['channel_wise']}_wise_{args['objective']}_gaussian_{args['gaussian_noise']}_sameaspaper_{args['same_as_paper']}.pickle", "wb") as output_file:
    pickle.dump(rets, output_file)

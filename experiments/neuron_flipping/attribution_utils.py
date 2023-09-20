@@ -56,7 +56,7 @@ def old_objective():
         grads_list[name] += param.grad.detach()
 
 
-def get_new_grads(model, x,y,current_example_index, robustify = False, n_EoT = 1):
+def get_new_grads(model, x, y, current_example_index, robustify = False, n_EoT = 1):
     '''
     robustify: To get robust estimate of gradients, should we add gaussian noise to input 
     n_EoT: number of steps for Expectation over transformation (gaussian noise)
@@ -69,9 +69,10 @@ def get_new_grads(model, x,y,current_example_index, robustify = False, n_EoT = 1
         # import ipdb; ipdb.set_trace()
         if robustify:
             # To get robust estimate of gradients, we will add gaussian noise to sample
-            x = x + l2_noise(x, 0.01)
+            # x = x + l2_noise(x, 0.01) # PREVIOUS (incorrect)
+            x_ = x + l2_noise(x, 0.01)  # NEW (correct)
 
-        preds = model(x)    
+        preds = model(x_)    
         final_preds = preds.detach() if final_preds is None else final_preds + preds.detach()
 
         loss = nn.CrossEntropyLoss(reduction = 'none')(preds, y)
@@ -93,6 +94,42 @@ def get_new_grads(model, x,y,current_example_index, robustify = False, n_EoT = 1
 
     
     return grads_list, preds/n_EoT
+
+
+def get_new_grads_true(model, x,y,current_example_index, robustify = False, n_EoT = 1):
+    '''
+    robustify: To get robust estimate of gradients, should we add gaussian noise to input 
+    n_EoT: number of steps for Expectation over transformation (gaussian noise)
+    returns grads_list: dictionary of gradients corresponding to each parameter in the model
+    '''
+    grads_list = {}
+    final_preds = None
+    n_EoT = 1 if not robustify else n_EoT
+    for _ in range (n_EoT):
+        # import ipdb; ipdb.set_trace()
+        if robustify:
+            # To get robust estimate of gradients, we will add gaussian noise to sample
+            x_ = x + l2_noise(x, 0.01)
+
+        preds = model(x_)
+        final_preds = preds.detach() if final_preds is None else final_preds + preds.detach()
+    
+    final_preds /= n_EoT
+
+    loss = nn.CrossEntropyLoss(reduction = 'none')(final_preds, y)
+    batch_size = y.shape[0]
+    #for the example that we want to flip, we must reverse the loss while maintaing the population loss
+    loss[current_example_index] *= -1*batch_size
+    loss = loss.mean()
+    loss.backward()
+
+    for name, param in (model.named_parameters()):
+        grads_list[name] = copy.deepcopy(param.grad.detach())
+
+    # ipdb.set_trace()
+    model.zero_grad()
+
+    return grads_list, final_preds
 
 
 def get_most_activated_node(model, grads_list, channel_wise = "channel", objective = "zero"):
@@ -140,7 +177,7 @@ def modify_weights(model, max_param_name, max_param_index, channel_wise = "chann
     return model
 
 
-def flip_preds_loop_helper(saved_model, loader, batch, indices, batch_mask, eval_post_edit, channel_wise, objective, gaussian_noise, verbose, n_EoT, noise_mask):
+def flip_preds_loop_helper(saved_model, loader, batch, indices, batch_mask, eval_post_edit, channel_wise, objective, gaussian_noise, verbose, n_EoT, noise_mask, same_as_paper):
     accs_list, iters_list, params_list, ids_list = [], [], [], []
     noisy_acc_list, clean_acc_list = [], []
     all_ids = torch.arange(batch[0].shape[0])
@@ -155,14 +192,20 @@ def flip_preds_loop_helper(saved_model, loader, batch, indices, batch_mask, eval
         iters = 0
         param_names = []
         while True:
-            grads_list, preds = get_new_grads(model, batch[0].cuda(), batch[1].cuda().long(),current_example_index, robustify = gaussian_noise, n_EoT = n_EoT)
+            if same_as_paper:
+                # Aggregate model outputs for noisy inputs and use that to compute gradients
+                grads_list, preds = get_new_grads_true(model, batch[0].cuda(), batch[1].cuda().long(),current_example_index, robustify = gaussian_noise, n_EoT = n_EoT)
+            else:
+                # Compute gradients for each noisy output, then average those gradients
+                grads_list, preds = get_new_grads(model, batch[0].cuda(), batch[1].cuda().long(),current_example_index, robustify = gaussian_noise, n_EoT = n_EoT)
+
             if preds[current_example_index].argmax() != batch[1][current_example_index]:
                 break
-            iters +=1
             max_val, max_param_name, max_param_index = get_most_activated_node(model, grads_list, channel_wise = channel_wise)
             model = modify_weights(model, max_param_name, max_param_index, channel_wise = channel_wise, objective = objective, grads_list = grads_list, preds = (preds[current_example_index], batch[1][current_example_index]))
             param_names.append(max_param_name)
-            
+            iters +=1
+
         if eval_post_edit:
             rets = eval(model, loader, eval_mode=True)
             rets["clean_accuracy"] = rets["acc_mask"][noise_mask == 0].mean()
@@ -178,7 +221,9 @@ def flip_preds_loop_helper(saved_model, loader, batch, indices, batch_mask, eval
             print("Iters", iters, rets["accuracy"], param_names)
     return accs_list, iters_list, params_list, ids_list, noisy_acc_list, clean_acc_list
 
-def flip_preds(saved_model, loader, example_type, noise_mask, rare_mask = None, eval_post_edit=True, num_examples = 100, verbose = False, channel_wise = "channel", objective = "zero", gaussian_noise = False, n_EoT = 1, n_parallel = 1):
+def flip_preds(saved_model, loader, example_type, noise_mask, rare_mask = None, eval_post_edit=True,
+               num_examples = 100, verbose = False, channel_wise = "channel", objective = "zero",
+               gaussian_noise = False, n_EoT = 1, n_parallel = 1, same_as_paper: bool = False):
     '''
     saved_model: original model that is to be changed
     loader: data loader
@@ -207,7 +252,7 @@ def flip_preds(saved_model, loader, example_type, noise_mask, rare_mask = None, 
         #split the data points across the threads
         indices = np.arange(num_valid_datapoints_in_batch)   
         ind_arglist = [indices[k*num_valid_datapoints_per_job:(k+1)*num_valid_datapoints_per_job] for k in range(n_parallel)]
-        arglist = [(saved_model, loader, batch, ind, batch_mask, eval_post_edit, channel_wise, objective, gaussian_noise, verbose, n_EoT, noise_mask) for ind in ind_arglist]
+        arglist = [(saved_model, loader, batch, ind, batch_mask, eval_post_edit, channel_wise, objective, gaussian_noise, verbose, n_EoT, noise_mask, same_as_paper) for ind in ind_arglist]
 
         pool = ThreadPool()     #(initializer=init_processes, initargs=(globVar,))
         result = pool.starmap(flip_preds_loop_helper, arglist)

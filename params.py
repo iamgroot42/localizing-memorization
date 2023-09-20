@@ -58,7 +58,7 @@ def parse_args():
     parser.add_argument("--objective", help = "For removing examples", type = str, default = "zero", choices=["zero", "step"])
     parser.add_argument("--n_EoT", help = "For removing examples", type = int, default = 5)
     parser.add_argument("--gaussian_noise", help = "For removing examples", type = int, default = 1)
-
+    parser.add_argument("--same_as_paper", help = "Compute gradients of noisy-output averages (True), or compute averages of noisy-output gradients (False)", type = bool, default = False)
 
     # Dropout
     parser.add_argument("--p_fixed", help = "For removing examples", type = float, default = 0)
