@@ -6,7 +6,7 @@ import sys
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Forgetting Time')
-    
+
     ## Basics
     parser.add_argument("--config_file", help="Configuration file containing parameters", type=str)
     parser.add_argument("--from_dir_name", help="Directory file name parse to get parameters", type=str, default = None)
@@ -39,7 +39,7 @@ def parse_args():
     parser.add_argument("--model_seed", help = "Seed", type = int, default = 0)
     parser.add_argument("--seed_superclass", help = "Seed for CIFAR100 superclass", type = int, default = 0)
     parser.add_argument("--num_epochs", help = "Number of Epochs", type = int, default = 100)
-    
+
     #HPARAMS
     parser.add_argument("--sched", help = "triangle/step", type = str, default = "triangle")
     parser.add_argument("--opt", help = "Optimizer", type = str, default = "SGD")
@@ -58,17 +58,17 @@ def parse_args():
     parser.add_argument("--objective", help = "For removing examples", type = str, default = "zero", choices=["zero", "step"])
     parser.add_argument("--n_EoT", help = "For removing examples", type = int, default = 5)
     parser.add_argument("--gaussian_noise", help = "For removing examples", type = int, default = 1)
-    parser.add_argument("--same_as_paper", help = "Compute gradients of noisy-output averages (True), or compute averages of noisy-output gradients (False)", type = bool, default = False)
+    parser.add_argument("--same_as_paper", help = "Compute gradients of noisy-output averages (True), or compute averages of noisy-output gradients (False)", type = bool, default = True)
 
     # Dropout
     parser.add_argument("--p_fixed", help = "For removing examples", type = float, default = 0)
     parser.add_argument("--p_mem", help = "For removing examples", type = float, default = 0)
     parser.add_argument("--fac", help = "For removing examples", type = int, default = 1)
     parser.add_argument("--drop_type", help = "For removing examples", type = str, default = "example_tied")
-    
-    
+
+
     parser.add_argument("--cscore", help = "For removing examples", type = float, default = 0)
-    
+
     return parser
 
 def add_config(args):

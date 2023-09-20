@@ -91,9 +91,9 @@ def get_new_grads(model, x, y, current_example_index, robustify = False, n_EoT =
 
     for name,param in (model.named_parameters()):
         grads_list[name] /= n_EoT
-
     
-    return grads_list, preds/n_EoT
+    #return grads_list, preds/n_EoT # PREVIOUS (incorrect)
+    return grads_list, final_preds/n_EoT # NEW (correct)
 
 
 def get_new_grads_true(model, x,y,current_example_index, robustify = False, n_EoT = 1):
@@ -112,7 +112,7 @@ def get_new_grads_true(model, x,y,current_example_index, robustify = False, n_Eo
             x_ = x + l2_noise(x, 0.01)
 
         preds = model(x_)
-        final_preds = preds.detach() if final_preds is None else final_preds + preds.detach()
+        final_preds = preds if final_preds is None else final_preds + preds
     
     final_preds /= n_EoT
 
@@ -129,7 +129,7 @@ def get_new_grads_true(model, x,y,current_example_index, robustify = False, n_Eo
     # ipdb.set_trace()
     model.zero_grad()
 
-    return grads_list, final_preds
+    return grads_list, final_preds.detach()
 
 
 def get_most_activated_node(model, grads_list, channel_wise = "channel", objective = "zero"):
