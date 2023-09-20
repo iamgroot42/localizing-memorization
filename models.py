@@ -1,5 +1,5 @@
 import torch.nn as nn
-from dropout import ExampleTiedDropout
+from modelsf.dropout import ExampleTiedDropout
 
 class Mul(nn.Module):
     def __init__(self, weight):

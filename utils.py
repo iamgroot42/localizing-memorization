@@ -6,7 +6,6 @@ from torch.cuda.amp import GradScaler, autocast
 from torch.optim import SGD, lr_scheduler
 import logging
 logging.getLogger("pl_bolts").setLevel(logging.ERROR)
-from pl_bolts.optimizers.lr_scheduler import LinearWarmupCosineAnnealingLR
 
 classes_mapper = {
         "cifar10":10,
@@ -117,12 +116,14 @@ def get_scheduler_epochs(name, optimizer, loader, max_epochs = None):
                                 [0, 1])
         scheduler = lr_scheduler.LambdaLR(optimizer, lr_schedule.__getitem__)
     elif name == "cosine":
+        from pl_bolts.optimizers.lr_scheduler import LinearWarmupCosineAnnealingLR
         iters_per_epoch = len(loader)+1
         T_max = EPOCHS*iters_per_epoch
         warmup_epochs = int(0.1*EPOCHS*iters_per_epoch)
         scheduler = LinearWarmupCosineAnnealingLR(optimizer, warmup_epochs, T_max, warmup_start_lr=0.0, eta_min=0.0, last_epoch=- 1)
 
     elif name == "cosine_standard":
+        from pl_bolts.optimizers.lr_scheduler import LinearWarmupCosineAnnealingLR
         iters_per_epoch = len(loader)+1
         T_max = EPOCHS*iters_per_epoch
         warmup_epochs = int(0.1*EPOCHS*iters_per_epoch)

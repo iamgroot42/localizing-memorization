@@ -14,20 +14,20 @@ def parse_args():
     parser.add_argument("--augmentation", help="Switch Off Train Augh", type=int, default=0)
     parser.add_argument("--shuffle", help="Train shuffle", type=int, default=1)
     parser.add_argument("--model_type", help="Model Architecture", type=str, 
-                        default = "lenet", 
+                        default = "resnet18", 
                         choices = ["resnet50","resnet9","lenet", "resnet18",
                                     "vgg11", "vgg16","vit",
                                     "resnet9_drop",
                                     "resnet18_drop",
                                     "resnet50_drop",])
 
-    parser.add_argument("--dataset1", help="Select dataset for first split", type=str, default = "mnist", choices = ["mnist","fashionmnist","emnist","cifar10","mnist_cifar_union","cifar-5m","cifar100","cifar10_500k","imagenette","cifar10_dcgan", "svhn"])
+    parser.add_argument("--dataset1", help="Select dataset for first split", type=str, default = "cifar10", choices = ["mnist","fashionmnist","emnist","cifar10","mnist_cifar_union","cifar-5m","cifar100","cifar10_500k","imagenette","cifar10_dcgan", "svhn"])
     parser.add_argument("--dataset2", help="Select dataset for second split", type=str, default = None, choices = ["mnist","fashionmnist","emnist","cifar10","mnist_cifar_union","cifar-5m","cifar100","cifar10_500k","imagenette","cifar10_dcgan", "svhn"])
     parser.add_argument("--id", help="identifier", type=str, default = '0')
 
     ## Add Noise
-    parser.add_argument("--noise_1", help="Fraction of Label Noise in Dataset 1", type=float, default = 0)
-    parser.add_argument("--noise_2", help="Fraction of Label Noise in Dataset 1", type=float, default = 0)
+    parser.add_argument("--noise_1", help="Fraction of Label Noise in Dataset 1", type=float, default = 0.01)
+    parser.add_argument("--noise_2", help="Fraction of Label Noise in Dataset 1", type=float, default = 0.01)
 
     parser.add_argument("--minority_1", help="Fraction of Rare Minority Group in Dataset 1", type=float, default = 0)
     parser.add_argument("--minority_2", help="Fraction of Rare Minority Group in Dataset 1", type=float, default = 0)
@@ -53,9 +53,9 @@ def parse_args():
 
 
     #ATTRIBUTION ANALYSIS
-    parser.add_argument("--example_type", help = "noisy/rare/clean", type = str, default = None, choices=["noisy", "rare", "clean"])
-    parser.add_argument("--channel_wise", help = "For removing examples", type = str, default = None, choices=["channel", "weight"])
-    parser.add_argument("--objective", help = "For removing examples", type = str, default = None, choices=["zero", "step"])
+    parser.add_argument("--example_type", help = "noisy/rare/clean", type = str, default = "clean", choices=["noisy", "rare", "clean"])
+    parser.add_argument("--channel_wise", help = "For removing examples", type = str, default = "channel", choices=["channel", "weight"])
+    parser.add_argument("--objective", help = "For removing examples", type = str, default = "zero", choices=["zero", "step"])
     parser.add_argument("--n_EoT", help = "For removing examples", type = int, default = 5)
     parser.add_argument("--gaussian_noise", help = "For removing examples", type = int, default = 1)
 

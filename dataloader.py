@@ -6,7 +6,7 @@ import random, copy
 import os
 from utils import *
 
-data_root = "/home/pratyus2/scratch/projects/layer_learning/data"
+data_root = "/p/distinf/maini"
 
 def seed_everything(seed: int):
     # print("setting seed", seed)

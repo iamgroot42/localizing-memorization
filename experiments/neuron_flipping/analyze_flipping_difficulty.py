@@ -24,10 +24,7 @@ seed_everything(args["seed"])
 pre_dict, ft_dict = return_loaders(args, get_frac=False, shuffle = False, aug = False)
 model_name =  f"{filename}{args['model_type']}_final.pt"
 
-
-try:
-   assert (os.path.exists(filename))
-except:
+if not os.path.exists(filename):
    # Train the Model
    print ("######### Training Model ###########")
    model = get_model(args["model_type"], NUM_CLASSES=10)
@@ -51,24 +48,22 @@ train_loader = pre_dict["train_loader"]
 
 print (f"Initial accuracy on training set = {eval(saved_model, train_loader, eval_mode = False)['accuracy']}")
 
-
 num_examples = 1000
-
 
 # channel_wise = channel, weight
 # objective = "zero", "step"
 rets = flip_preds(saved_model, 
-                            loader = pre_dict["train_loader"], 
-                            example_type=args["example_type"], 
-                            noise_mask= torch.from_numpy(pre_dict["noise_mask"]), 
-                            rare_mask = torch.from_numpy(pre_dict["rare_mask"]) if pre_dict["rare_mask"] is not None else None, 
-                            eval_post_edit=True, 
-                            num_examples = num_examples, 
-                            verbose = False,
-                            channel_wise = args["channel_wise"],
-                            gaussian_noise=args["gaussian_noise"],
-                            objective = args["objective"],
-                            n_EoT=args["n_EoT"])
+                  loader = pre_dict["train_loader"], 
+                  example_type=args["example_type"], 
+                  noise_mask= torch.from_numpy(pre_dict["noise_mask"]), 
+                  rare_mask = torch.from_numpy(pre_dict["rare_mask"]) if pre_dict["rare_mask"] is not None else None, 
+                  eval_post_edit=True, 
+                  num_examples = num_examples, 
+                  verbose = False,
+                  channel_wise = args["channel_wise"],
+                  gaussian_noise=args["gaussian_noise"],
+                  objective = args["objective"],
+                  n_EoT=args["n_EoT"])
 
 
 import pickle
